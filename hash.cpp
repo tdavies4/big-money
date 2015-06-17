@@ -11,6 +11,8 @@
 #include <string>
 #include <iomanip>
 #include "hash.h"
+#include "linkedlist.h"
+#include "scrapper.h"
 using namespace std;
 
 /*****
@@ -19,6 +21,8 @@ using namespace std;
  *****/
 HASH::HASH( int x)
 {
+    rejected = new linklist;
+    
     hashtablesize=x;
     load=0;
     collisions=0;
@@ -28,7 +32,7 @@ HASH::HASH( int x)
     item bucket;
     bucket.count=0;
     
-    tower choice("empty",0,0,"empty");
+    Scrapper choice("empty",0,0,"empty",0,"empty",0,0,0);
     bucket.my_array[0]=choice;
     bucket.my_array[1]=choice;
     bucket.my_array[2]=choice;
@@ -73,16 +77,17 @@ int HASH::gethashed(string key)
  check if the unique key address is available. if so insert single_item into the bucket
  if not display it to hash_output.txt
  ******/
-void HASH::add(tower& single_item)
+bool HASH::add(Scrapper& single_item)
 {
     
     
     int index;
-    index=gethashed(single_item.return_name());
+    index=gethashed(single_item.getname());
     
     
-    int x=0;
-    while( ptr[index].my_array[x].empty() ||  x<3)
+   
+    
+    for(int x=0 ; x<3 ; x++ )
     {
         
         
@@ -102,31 +107,21 @@ void HASH::add(tower& single_item)
             ptr[index].my_array[x]=single_item;
             ptr[index].count++;
             
-            
-            
-            break;
+            return true;
         }
-        x++;
-        
-        
-        
         // if bucket is full print to txt file
-        if( x==3)
+        if( x==2)
         {
             
-            fstream myfile;
-            myfile.open ("Hash_Output.txt", ios::out | ios::app);
-            myfile << single_item.return_name() << " " << single_item.return_age();
-            myfile << " " << single_item.return_price() << " ";
-            myfile << single_item.return_type() << endl;
-            myfile.close();
-            break;
+         rejected->insert(single_item);
+            
+            return false;
         }
         
         
     }
     
-    
+    return false;
     
 }
 
@@ -142,7 +137,10 @@ void HASH::print()
         for (int y=0; y<3; y++)
         {
             if (!ptr[x].my_array[y].empty())
-                ptr[x].my_array[y].print();
+            {
+                cout << ptr[x].my_array[y] << endl;
+                cout << endl;
+            }
         }
     }
     
@@ -170,13 +168,10 @@ void HASH::print_two()
                 {
                     cout <<"                            ";
                 }
-                ptr[x].my_array[y].print();
+                cout<<ptr[x].my_array[y]<<endl;;
             }
         }
     }
-    
-    
-    
 }
 
 
@@ -188,23 +183,41 @@ void HASH::print_two()
  object that has the same characteristics
  if found return the object, if not return a empty object
  ******/
-tower HASH::search(string name)
+Scrapper HASH::search(string name)
 {
     
     int index = gethashed(name);
     
-    tower ibrahim("empty",0,0,"empty");
+    Scrapper ibrahim;
     
     for (int y =0; y<3; y++)
     {
         
-        if (ptr[index].my_array[y].return_name().length() == name.length())
+        if (ptr[index].my_array[y].getname() == name)
             return ptr[index].my_array[y];
-        
     }
-    
-    
     return ibrahim;
+}
+
+
+bool HASH::remove(string name)
+{
+    
+    int index = gethashed(name);
+    
+    Scrapper ibrahim;
+    
+    for (int y =0; y<3; y++)
+    {
+        
+        if (ptr[index].my_array[y].getname() == name)
+        {
+            
+            ptr[index].my_array[y]= ibrahim;
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -221,9 +234,7 @@ int HASH::empty_buckets()
         if (ptr[x].my_array[0].empty())
             count++;
     }
-    
     return count;
-    
 }
 
 
@@ -235,4 +246,6 @@ HASH::~HASH()
     
     delete [] ptr;
 }
+
+
 
